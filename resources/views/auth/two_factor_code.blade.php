@@ -31,53 +31,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verificación de Código 2FA</title>
-    <!-- Enlace a la hoja de estilo de Bootstrap 4 -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container mt-5">
-        <h2 class="text-center mb-4">Verificación de Código</h2>
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="verification-container">
+            <h2 class="text-center mb-4">Verificación de Código</h2>
 
-        <!-- Mostrar mensajes de error personalizados -->
-        @if (session('error'))
-            <div class="alert alert-danger">
-                {{ session('error') }}
-            </div>
-        @endif
+            <!-- Mostrar mensajes de error personalizados -->
+            @if (session('error'))
+                <div class="alert alert-danger">
+                    {{ session('error') }}
+                </div>
+            @endif
 
-        <!-- Mostrar errores de validación -->
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+            <!-- Mostrar errores de validación -->
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-        <!-- Mostrar mensajes de éxito -->
-        @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
+            <!-- Mostrar mensajes de éxito -->
+            @if (session('success'))
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
+            @endif
 
-        <!-- Formulario de verificación de 2FA -->
-        <form action="{{ route('two-factor.verify') }}" method="POST">
-            @csrf
-            <div class="form-group">
-                <label for="code">Ingrese el código que recibió por correo electrónico</label>
-                <input type="text" id="code" name="code" class="form-control" placeholder="Código de verificación" required>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Verificar Código</button>
-        </form>
+            <!-- Formulario de verificación de 2FA -->
+            <form id="verifyForm" action="{{ route('two-factor.verify') }}" method="POST" class="mt-4">
+                @csrf
 
+                <div class="form-group">
+                    <label for="code">Ingrese el código que recibió por correo electrónico</label>
+                    <input type="text" id="code" name="code" class="form-control" placeholder="Código de verificación" required>
+                </div>
+                <button id="verifyButton" type="submit" class="btn btn-primary btn-block">
+                    <span id="verifySpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    <span id="verifyButtonText">Verificar Código</span>
+                </button>
+            </form>
 
-        <form action="{{ route('two-factor.resend') }}" method="POST" style="display: inline;">
-            @csrf
-            <button type="submit" class="btn btn-primary">Reenviar código</button>
-        </form>
+            <!-- Botón para reenviar código -->
+            <form id="resendForm" action="{{ route('two-factor.resend') }}" method="POST" class="text-center mt-3">
+                @csrf
+                <button id="resendButton" type="submit" class="btn btn-secondary">
+                    <span id="resendSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    <span id="resendButtonText">Reenviar código</span>
+                </button>
+            </form>
+        </div>
     </div>
+
+    <script>
+        // Manejo del formulario de verificación
+        const verifyForm = document.getElementById('verifyForm');
+        const verifyButton = document.getElementById('verifyButton');
+        const verifySpinner = document.getElementById('verifySpinner');
+        const verifyButtonText = document.getElementById('verifyButtonText');
+
+        verifyForm.addEventListener('submit', function () {
+            verifyButton.disabled = true; // Deshabilitar el botón
+            verifySpinner.classList.remove('d-none'); // Mostrar el spinner
+            verifyButtonText.textContent = "Cargando..."; // Cambiar el texto
+        });
+
+        // Manejo del formulario para reenviar código
+        const resendForm = document.getElementById('resendForm');
+        const resendButton = document.getElementById('resendButton');
+        const resendSpinner = document.getElementById('resendSpinner');
+        const resendButtonText = document.getElementById('resendButtonText');
+
+        resendForm.addEventListener('submit', function () {
+            resendButton.disabled = true; // Deshabilitar el botón
+            resendSpinner.classList.remove('d-none'); // Mostrar el spinner
+            resendButtonText.textContent = "Cargando..."; // Cambiar el texto
+        });
+    </script>
 </body>
 </html>

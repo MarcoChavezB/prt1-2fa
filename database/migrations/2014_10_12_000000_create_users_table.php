@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('two_factor_code')->nullable();
             $table->string('two_factor_code_expires_at')->nullable();
             $table->boolean('two_factor_verified')->default(false);
+            $table->string('two_factor_expires_at')->nullable();
 
             $table->rememberToken();
             $table->timestamps();

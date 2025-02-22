@@ -25,7 +25,8 @@ class User extends Authenticatable
         'verification_code_expires_at',
         'two_factor_code',
         'two_factor_code_expires_at',
-        'two_factor_verified'
+        'two_factor_verified',
+        'two_factor_expires_at'
 
     ];
 

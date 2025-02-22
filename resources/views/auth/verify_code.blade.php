@@ -64,32 +64,98 @@
                             </div>
                         @endif
 
-                        <!-- Formulario para ingresar el código -->
-                        <form action="{{ route('code.perform') }}" method="POST">
-                            @csrf
+    <!-- Formulario para ingresar el código -->
+    <form id="verifyForm" action="{{ route('code.perform') }}" method="POST">
+        @csrf
 
-                            <!-- Campo para el código -->
-                            <div class="form-group">
-                                <label for="code">Código de verificación</label>
-                                <input type="text" id="code" name="code" class="form-control @error('code') is-invalid @enderror" value="{{ old('code') }}">
-                                @error('code')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
-
-                            <!-- Botón de envío -->
-                            <button type="submit" class="btn btn-primary">Verificar</button>
-                        </form>
-                        <form action="{{ route('resend.verification') }}" method="POST" style="display: inline;">
-                            @csrf
-                            <button type="submit" class="btn btn-primary">Reenviar código</button>
-                        </form>
-                    </div>
+        <!-- Campo para el código de verificación -->
+        <div class="form-group">
+            <label for="code">Código de verificación</label>
+            <input type="text" id="code" name="code" class="form-control @error('code') is-invalid @enderror" value="{{ old('code') }}">
+            @error('code')
+                <div class="invalid-feedback">
+                    {{ $message }}
                 </div>
-            </div>
+            @enderror
         </div>
+
+        <!-- Campo oculto para el token de reCAPTCHA -->
+        <input type="hidden" id="g-recaptcha-response-verify" name="g-recaptcha-response">
+
+        <!-- Botón de envío -->
+        <button id="verifyButton" type="submit" class="btn btn-primary" disabled>
+            <span id="verifySpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            <span id="verifyButtonText">Verificar</span>
+        </button>
+    </form>
+
+    <!-- Formulario para reenviar código -->
+    <form id="resendForm" action="{{ route('resend.verification') }}" method="POST">
+        @csrf
+
+        <!-- Campo oculto para el token de reCAPTCHA -->
+        <input type="hidden" id="g-recaptcha-response-resend" name="g-recaptcha-response">
+
+        <!-- Botón para reenviar código -->
+        <button id="resendButton" type="submit" class="btn btn-secondary" disabled>
+            <span id="resendSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            <span id="resendButtonText">Reenviar código</span>
+        </button>
+    </form>
+
+    <!-- Captcha único compartido -->
+    <div class="g-recaptcha mt-3"
+         data-sitekey="{{ env('NOCAPTCHA_SITEKEY') }}"
+         data-callback="onCaptchaSuccess"
+         data-expired-callback="onCaptchaExpired"></div>
+
+    <!-- Mensaje de error para el captcha -->
+    <div id="recaptcha-error" class="alert alert-danger d-none mt-2">
+        Por favor, completa el captcha para continuar.
     </div>
+
+    <!-- Script para manejar el reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script>
+        let isCaptchaValid = false;
+
+        /**
+         * Función que se ejecuta cuando el usuario completa el reCAPTCHA.
+         * Guarda el token en los formularios y habilita los botones.
+         */
+        function onCaptchaSuccess(token) {
+            isCaptchaValid = true;
+
+            // Guardar el token en los formularios
+            document.getElementById('g-recaptcha-response-verify').value = token;
+            document.getElementById('g-recaptcha-response-resend').value = token;
+
+            // Habilitar botones
+            document.getElementById('verifyButton').disabled = false;
+            document.getElementById('resendButton').disabled = false;
+
+            // Ocultar mensaje de error
+            document.getElementById('recaptcha-error').classList.add('d-none');
+        }
+
+        /**
+         * Función que se ejecuta cuando el reCAPTCHA expira.
+         * Deshabilita los botones y borra el token.
+         */
+        function onCaptchaExpired() {
+            isCaptchaValid = false;
+
+            // Borrar el token
+            document.getElementById('g-recaptcha-response-verify').value = "";
+            document.getElementById('g-recaptcha-response-resend').value = "";
+
+            // Deshabilitar botones
+            document.getElementById('verifyButton').disabled = true;
+            document.getElementById('resendButton').disabled = true;
+
+            // Mostrar mensaje de error
+            document.getElementById('recaptcha-error').classList.remove('d-none');
+        }
+    </script>
 </body>
 </html>

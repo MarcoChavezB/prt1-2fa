@@ -39,20 +39,35 @@
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
     <div class="w-full max-w-md bg-white rounded-lg shadow-lg p-6">
-        <h2 class="text-2xl font-bold text-center mb-6">Register</h2>
+        <h2 class="text-2xl font-bold text-center mb-6">Registro</h2>
+
+        <!-- Mostrar mensajes de éxito -->
+        @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        <!-- Mostrar mensajes de error -->
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li class="text-sm text-red-600">{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         <!-- Formulario de Registro -->
-        <form action="{{ route('register.perform') }}" method="POST">
+        <form action="{{ route('register.perform') }}" method="POST" id="registerForm">
             @csrf
-
             <!-- Nombre -->
             <div class="mb-4">
                 <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
                 <input
-                value="marco"
                 type="text" name="name" id="name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                 @error('name')
-                    <!-- Mensaje de error para el campo de nombre -->
                     <span class="text-sm text-red-600">{{ $message }}</span>
                 @enderror
             </div>
@@ -61,10 +76,8 @@
             <div class="mb-4">
                 <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                 <input
-                value="marco1102004@gmail.com"
                 type="email" name="email" id="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                 @error('email')
-                    <!-- Mensaje de error para el campo de correo electrónico -->
                     <span class="text-sm text-red-600">{{ $message }}</span>
                 @enderror
             </div>
@@ -73,10 +86,8 @@
             <div class="mb-4">
                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                 <input
-                value="10 enero"
                 type="password" name="password" id="password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                 @error('password')
-                    <!-- Mensaje de error para el campo de contraseña -->
                     <span class="text-sm text-red-600">{{ $message }}</span>
                 @enderror
             </div>
@@ -85,19 +96,20 @@
             <div class="mb-4">
                 <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirm Password</label>
                 <input
-                value="10 enero"
                 type="password" name="password_confirmation" id="password_confirmation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
             </div>
 
             <!-- Botón de Envío -->
             <div class="mb-4">
-                <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600">Register</button>
+                <button id="submitButton" type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 flex items-center justify-center">
+                    <span class="spinner-border hidden mr-2" id="spinner"></span>
+                    <span id="buttonText">Register</span>
+                </button>
 
-                <div class="g-recaptcha" data-sitekey="6LfZccUqAAAAAKTRQZprhs0YzPKD1739c-7d6Gzs"></div>
-                <div id="recaptcha-error" class="bg-red-200 text-red" style="display: none;">
-                   Por favor, completa el captcha para continuar.
+                <div class="g-recaptcha" data-sitekey="{{ env('NOCAPTCHA_SITEKEY') }}"></div>
+                <div id="recaptcha-error" class="bg-red-200 text-red-600 text-sm mt-2 hidden">
+                    Por favor, completa el captcha para continuar.
                 </div>
-                <script src="https://www.google.com/recaptcha/api.js" async defer></script>
             </div>
 
             <!-- Enlace para iniciar sesión si el usuario ya tiene cuenta -->
@@ -106,21 +118,47 @@
             </div>
         </form>
     </div>
-</body>
 
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script>
-        document.querySelector('form').addEventListener('submit', function (event) {
-            // Verifica si el captcha ha sido completado
+        const form = document.getElementById('registerForm');
+        const submitButton = document.getElementById('submitButton');
+        const spinner = document.getElementById('spinner');
+        const buttonText = document.getElementById('buttonText');
+        const recaptchaError = document.getElementById('recaptcha-error');
+
+        form.addEventListener('submit', function (event) {
             const response = grecaptcha.getResponse();
+
             if (response.length === 0) {
-                // Si no se ha completado, muestra el mensaje de error y evita el envío del formulario
-                document.getElementById('recaptcha-error').style.display = 'block';
-                event.preventDefault(); // Detiene el envío del formulario
+                // Muestra el mensaje de error del captcha y cancela el envío
+                recaptchaError.classList.remove('hidden');
+                event.preventDefault();
+                resetButtonState();
             } else {
-                // Si está completado, oculta el mensaje de error (por si ya se mostró antes)
-                document.getElementById('recaptcha-error').style.display = 'none';
+                // Oculta el mensaje de error del captcha
+                recaptchaError.classList.add('hidden');
+
+                // Deshabilita el botón y muestra el spinner
+                submitButton.disabled = true;
+                spinner.classList.remove('hidden');
+                buttonText.textContent = "Cargando...";
+            }
+        });
+
+        function resetButtonState() {
+            // Restaura el estado del botón en caso de errores
+            submitButton.disabled = false;
+            spinner.classList.add('hidden');
+            buttonText.textContent = "Register";
+        }
+
+        // Al cargar la página, verifica si hay errores para restaurar el botón
+        document.addEventListener('DOMContentLoaded', function () {
+            if (document.querySelector('.text-red-600')) {
+                resetButtonState();
             }
         });
     </script>
-
+</body>
 </html>

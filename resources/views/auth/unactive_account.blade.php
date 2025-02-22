@@ -29,7 +29,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verificación de Correo Electrónico</title>
-    <!-- Agregar tus estilos CSS aquí -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
@@ -51,11 +50,12 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('resend.verification') }}">
+                        <form onsubmit='disableButton()' id="resendForm" method="POST" action="{{ route('resend.verification') }}">
                             @csrf
                             <div class="form-group text-center">
-                                <button type="submit" class="btn btn-primary">
-                                    Enviar nuevamente el correo de verificación
+                                <button id="submit_button" type="submit" class="btn btn-primary">
+                                    <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                    <span id="buttonText">Enviar nuevamente el correo de verificación</span>
                                 </button>
                             </div>
                         </form>
@@ -65,7 +65,15 @@
         </div>
     </div>
 
-    <!-- Agregar tus scripts JS aquí -->
+    <script>
+        const submitButton = document.getElementById('submit_button');
+        function disableButton(){
+            submitButton.disabled = true;
+            submitButton.innerText = 'Cargando...';
+            submitButton.style.cursor = 'not-allowed';
+        }
+    </script>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

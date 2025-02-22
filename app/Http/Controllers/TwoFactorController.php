@@ -11,6 +11,11 @@ class TwoFactorController extends Controller
 {
     // Tiempo de expiración del código de 2FA (en minutos)
     public int $timeExpirationCode = 10;
+
+    // Tiempo de expiracion de la session (en minutos)
+    public int $sessionExpiresMinutes = 10;
+
+    // Clave de la session
     public string $sessionTwoFactorEmail = 'two_factor_code_email';
 
     /*
@@ -32,6 +37,7 @@ class TwoFactorController extends Controller
         // Asignar el código 2FA cifrado y la fecha de expiración
         $user->two_factor_code = Hash::make($code);
         $user->two_factor_code_expires_at = now()->addMinutes($this->timeExpirationCode);
+        $user->two_factor_expires_at = now()->addMinutes($this->sessionExpiresMinutes);
         $user->save();
     }
 
@@ -53,6 +59,7 @@ class TwoFactorController extends Controller
         $user->two_factor_code = null;
         $user->two_factor_code_expires_at = null;
         $user->two_factor_verified = true;
+        $user->two_factor_expires_at = now()->addMinutes($this->sessionExpiresMinutes);
         $user->save();
     }
 
@@ -102,5 +109,39 @@ class TwoFactorController extends Controller
         }
 
         return false;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Eliminar Sesión de 2FA
+    |--------------------------------------------------------------------------
+    |
+    | Este método desactiva la autenticación de dos factores (2FA) para el usuario
+    | proporcionado, eliminando todos los datos relacionados con la verificación
+    | de 2FA, como el código, su fecha de expiración y la marca de verificación.
+    |
+    | Los campos afectados son:
+    | - `two_factor_verified`: Se establece como `false`, indicando que el usuario
+    |   ya no ha verificado el 2FA.
+    | - `two_factor_expires_at`: Se establece como `null`, eliminando la fecha de expiración
+    |   del código 2FA.
+    | - `two_factor_code`: Se establece como `null`, eliminando el código de 2FA.
+    | - `two_factor_code_expires_at`: Se establece como `null`, eliminando la fecha de expiración
+    |   del código de 2FA.
+    |
+    | Finalmente, se guardan los cambios realizados en la base de datos.
+    |
+    | @param User $user El usuario cuyo 2FA será desactivado.
+    | @return void No retorna valor.
+    |
+    */
+    public function deleteTwoFaSession(User $user){
+        $user->two_factor_verified = false;
+        $user->two_factor_expires_at = null;
+        $user->two_factor_code = null;
+        $user->two_factor_code_expires_at = null;
+
+        $user->save();
     }
 }

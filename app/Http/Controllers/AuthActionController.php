@@ -44,15 +44,21 @@ class AuthActionController extends Controller
     */
     public function login(Request $request)
     {
-        // Validar correo y contraseña
+        // Validacion de campos
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required',
+            'g-recaptcha-response' => 'required'
+        ], [
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'Por favor, ingresa un correo electrónico válido.',
+            'password.required' => 'La contraseña es obligatoria.',
+            'g-recaptcha-response.required' => 'Por favor valide el captcha',
         ]);
 
         // Si la validación falla, regresar con errores
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator);
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // Buscar al usuario por correo
@@ -104,13 +110,36 @@ class AuthActionController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users|max:255',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|min:10|confirmed|case_diff|numbers|letters|symbols',
+            'g-recaptcha-response' => 'required'
+        ], [
+            'name.required' => 'El nombre es obligatorio.',
+            'name.string' => 'El nombre debe ser una cadena de texto.',
+            'name.max' => 'El nombre no puede tener más de 255 caracteres.',
+
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'Por favor, ingresa un correo electrónico válido.',
+            'email.unique' => 'Este correo electrónico ya está registrado.',
+            'email.max' => 'El correo electrónico no puede tener más de 255 caracteres.',
+
+            'password.numbers' => 'La contrasena debe tener al menos un numero',
+            'password.letters' => 'La contrasena debe tener letras',
+            'password.symbols' => 'La contrasena debe contener symbolos',
+            'password.case_diff' => 'La contrasena debe contener mayusculas y minusculas',
+
+            'password.required' => 'La contraseña es obligatoria.',
+            'password.string' => 'La contraseña debe ser una cadena de texto.',
+            'password.min' => 'La contraseña debe tener al menos 10 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+
+            'g-recaptcha-response.required' => 'Valide el captcha',
         ]);
 
         // Verificar si la validación falla
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
+
 
         // Generar y enviar el código de verificación al correo
         $verificationCode = $this->verifyCodeController->generateCode();
@@ -149,6 +178,11 @@ class AuthActionController extends Controller
         // Validación del código
         $codeValidator = Validator::make($request->all(), [
             'code' => 'required|string',
+            'g-recaptcha-response' => 'required'
+        ], [
+            'code.required' => 'El código es obligatorio.',
+            'code.string' => 'El código debe ser una cadena de texto.',
+            'g-recaptcha-response.required' => 'Valide el captcha para validar el codigo',
         ]);
 
         if ($codeValidator->fails()) {
@@ -186,8 +220,19 @@ class AuthActionController extends Controller
     | @return \Illuminate\Http\RedirectResponse Redirección con mensaje de éxito
     |
     */
-    public function resendCode()
+    public function resendCode(Request $request)
     {
+
+        $validator = Validator::make($request->all(), [
+            'g-recaptcha-response' => 'required'
+        ], [
+            'g-recaptcha-response.required' => 'valida el captcha'
+        ]);
+
+        if($validator->fails()){
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         $email = session($this->verifyCodeController->userEmailSessionName);
 
         if (!$email) {
@@ -208,24 +253,50 @@ class AuthActionController extends Controller
         return redirect()->route('code.verify')->with('success', 'Se envió un código de verificación al correo proporcionado');
     }
 
-    public function resendTwoFaCode(){
+    /**
+     * Reenvía un código de verificación de dos factores (2FA) al usuario.
+     *
+     * Esta función realiza las siguientes acciones:
+     * 1. Obtiene el correo electrónico del usuario desde la sesión.
+     * 2. Verifica si el correo electrónico existe y si el usuario está registrado.
+     * 3. Genera un nuevo código de verificación.
+     * 4. Envía el nuevo código al correo electrónico del usuario.
+     * 5. Actualiza el código en la base de datos.
+     * 6. Redirige al usuario a la vista de ingreso de código con un mensaje de éxito.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     *   - Redirige a la página anterior con un mensaje de error si no se encuentra el correo electrónico o el usuario.
+     *   - Redirige a la ruta 'code.two-factor' con un mensaje de éxito si el código se reenvía correctamente.
+     */
+    public function resendTwoFaCode()
+    {
+        // Obtener el correo electrónico del usuario desde la sesión
         $email = session($this->twoFactorController->sessionTwoFactorEmail);
 
-        if(!$email){
-            return redirect()->back()->with('error', 'sesion caducada inicie sesion de nuevo');
+        // Verificar si el correo electrónico existe en la sesión
+        if (!$email) {
+            return redirect()->back()->with('error', 'Sesión caducada, inicie sesión de nuevo.');
         }
 
+        // Buscar al usuario en la base de datos
         $user = User::where('email', $email)->first();
 
-        if(!$user){
-            return redirect()->back()->with('error', 'usuario no encontrado inicie sesion de nuevo');
+        // Verificar si el usuario existe
+        if (!$user) {
+            return redirect()->back()->with('error', 'Usuario no encontrado, inicie sesión de nuevo.');
         }
 
+        // Generar un nuevo código de verificación
         $twoFactorCode = $this->verifyCodeController->generateCode();
+
+        // Enviar el nuevo código al correo electrónico del usuario
         $this->twoFactorController->sendCode($user->email, $twoFactorCode);
+
+        // Actualizar el código en la base de datos
         $this->twoFactorController->updateCode($user, $twoFactorCode);
 
-        return redirect()->route('code.two-factor')->with('success', 'se envio un codigo nuevo');
+        // Redirigir al usuario a la vista de ingreso de código con un mensaje de éxito
+        return redirect()->route('code.two-factor')->with('success', 'Se envió un código nuevo.');
     }
 
     /*
@@ -242,8 +313,13 @@ class AuthActionController extends Controller
     */
     public function validateTwoFaCode(Request $request)
     {
-        // Validar el código ingresado
-        $request->validate(['code' => 'required|string']);
+
+        $request->validate([
+            'code' => 'required|string',
+        ], [
+            'code.required' => 'El código es obligatorio.',
+            'code.string' => 'El código debe ser una cadena de texto.',
+        ]);
 
         // Obtener el usuario asociado al 2FA desde la sesión
         $userEmail = session($this->twoFactorController->sessionTwoFactorEmail);
@@ -266,4 +342,27 @@ class AuthActionController extends Controller
         session()->forget($this->twoFactorController->sessionTwoFactorEmail);
         return redirect()->route('home')->with('success', 'Inicio de sesión exitoso.');
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cerrar Sesión del Usuario
+    |--------------------------------------------------------------------------
+    |
+    | Este método se encarga de cerrar la sesión del usuario actualmente
+    | autenticado. Además, elimina cualquier sesión activa relacionada
+    | con la autenticación de dos factores (2FA) del usuario antes de
+    | realizar el cierre de sesión.
+    |
+    | @return void
+    |
+    */
+    public function logout(){
+        $user = Auth::user();
+
+        $this->twoFactorController->deleteTwoFaSession($user);
+        Auth::logout();
+
+        return redirect()->route('login.view')->with('success', 'se cerro la sesion');
+    }
 }
+

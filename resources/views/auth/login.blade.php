@@ -1,3 +1,4 @@
+
 <!--
     Vista: login.blade.php
 
@@ -26,142 +27,128 @@
     - **csrf**: Protección contra ataques CSRF (Cross-Site Request Forgery).
     - **if**: Para mostrar los mensajes de éxito o error si están presentes en la sesión.
 -->
+
 <!DOCTYPE html>
 <html lang="es">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Login - Laravel</title>
-
-
-        <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-        <link href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-    </head>
-    <body>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login - Laravel</title>
+    <link rel="stylesheet" href="../../css/auth/login.css">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+</head>
+<body>
+    <div class="container d-flex justify-content-center align-items-center vh-100">
         <div class="login-container">
 
             <!-- Mostrar mensajes de éxito -->
             @if (session('success'))
-                <!-- Muestra un mensaje de éxito si existe una sesión con la clave 'success' -->
                 <div class="alert alert-success">
                     {{ session('success') }}
                 </div>
             @endif
 
             <!-- Mostrar mensajes de error -->
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <!-- Mostrar mensajes de error -->
             @if (session('error'))
-                <!-- Muestra un mensaje de error si existe una sesión con la clave 'error' -->
                 <div class="alert alert-danger">
                     {{ session('error') }}
                 </div>
             @endif
-
             <!-- Título de la página -->
-            <h2>Iniciar Sesión</h2>
+            <h2 class="text-center">Iniciar Sesión</h2>
 
             <!-- Formulario de inicio de sesión -->
-            <form action="{{ route('login.perform') }}" method="POST">
+
+            <form action="{{ route('login.perform') }}" method="POST" class="mt-4" id="loginForm">
                 @csrf
                 <div class="form-group">
-                    <!-- Campo para ingresar el correo electrónico -->
                     <label for="email">Correo Electrónico</label>
-                    <input type="email" id="email" name="email" placeholder="Ingrese su correo" required>
-                </div>
-                <div class="form-group">
-                    <!-- Campo para ingresar la contraseña -->
-                    <label for="password">Contraseña</label>
-                    <input type="password" id="password" name="password" placeholder="Ingrese su contraseña" required>
-                </div>
-                <div class="buttons">
-                    <!-- Botón para enviar el formulario -->
-                    <button type="submit" class="btn-submit">Iniciar sesión</button>
-                    <div class="g-recaptcha" data-sitekey="6LfZccUqAAAAAKTRQZprhs0YzPKD1739c-7d6Gzs"></div>
-                    <div id="recaptcha-error" class="alert alert-danger" style="display: none;">
-                       Por favor, completa el captcha para continuar.
-                    </div>
-                    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Ingrese su correo" required
+                           oninvalid="this.setCustomValidity('Por favor ingrese un correo electrónico válido')"
+                           oninput="this.setCustomValidity('')">
                 </div>
 
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Ingrese su contraseña" required
+                           oninvalid="this.setCustomValidity('Este campo es obligatorio')"
+                           oninput="this.setCustomValidity('')">
+                </div>
+                <div class="form-group text-center">
+                    <button type="submit" id="submitButton" class="btn btn-primary btn-block">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        <span class="button-text">Iniciar sesión</span>
+                    </button>
+                </div>
+                <div class="g-recaptcha" data-sitekey="{{ env('NOCAPTCHA_SITEKEY') }}"></div>
+                <div id="recaptcha-error" class="alert alert-danger d-none">
+                    Por favor, completa el captcha para continuar.
+                </div>
             </form>
 
+
             <!-- Enlace a la vista de registro -->
-            <a href="{{ route('register.view') }}" class="btn-submit">Registrarse</a>
+            <div class="text-center mt-3">
+                <p>¿No tienes cuenta? <a href="{{ route('register.view') }}" class="text-primary">Regístrate aquí</a></p>
+            </div>
         </div>
-    </body>
+    </div>
+
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
     <script>
-        document.querySelector('form').addEventListener('submit', function (event) {
-            // Verifica si el captcha ha sido completado
-            const response = grecaptcha.getResponse();
-            if (response.length === 0) {
-                // Si no se ha completado, muestra el mensaje de error y evita el envío del formulario
-                document.getElementById('recaptcha-error').style.display = 'block';
-                event.preventDefault(); // Detiene el envío del formulario
+       const form = document.getElementById('loginForm');
+        const submitButton = document.getElementById('submitButton');
+        const spinner = submitButton.querySelector('.spinner-border');
+        const buttonText = submitButton.querySelector('.button-text');
+
+        form.addEventListener('submit', function (event) {
+            const recaptchaResponse = grecaptcha.getResponse();
+
+            if (recaptchaResponse.length === 0) {
+                // Si el captcha no es válido, mostramos el error y restauramos el botón
+                document.getElementById('recaptcha-error').classList.remove('d-none');
+                event.preventDefault();
+                resetButtonState();
             } else {
-                // Si está completado, oculta el mensaje de error (por si ya se mostró antes)
-                document.getElementById('recaptcha-error').style.display = 'none';
+                document.getElementById('recaptcha-error').classList.add('d-none');
+
+                // Deshabilita el botón y muestra el spinner
+                submitButton.disabled = true;
+                spinner.classList.remove('d-none');
+                buttonText.textContent = "Cargando...";
+            }
+        });
+
+        function resetButtonState() {
+            // Restaura el estado del botón si ocurre un error
+            submitButton.disabled = false;
+            spinner.classList.add('d-none');
+            buttonText.textContent = "Iniciar sesión";
+        }
+
+        // Si hay mensajes de error de Laravel después de que la página se recargue,
+        // restauramos el estado del botón en caso de que algo fallara.
+        document.addEventListener('DOMContentLoaded', function () {
+            if (document.querySelector('.alert-danger')) {
+                resetButtonState();
             }
         });
     </script>
 
-    <style>
-        /* Estilos personalizados para la vista de inicio de sesión */
-        body {
-            font-family: 'Nunito', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f7fafc;
-        }
-        .login-container {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        label {
-            display: block;
-            font-weight: 600;
-        }
-        .bluttons{
-            display: flex;
-            gap: 10px;
-            flex-direction: column;
-            align-items: center;
-        }
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-        .btn-submit {
-            width: 100%;
-            padding: 1rem;
-            background-color: black;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        .btn-submit:hover {
-            background-color: #45a049;
-        }
-    </style>
+</body>
 </html>
+
