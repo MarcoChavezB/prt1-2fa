@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Psy\CodeCleaner\ReturnTypePass;
 
 class AuthActionController extends Controller
 {
@@ -66,7 +67,7 @@ class AuthActionController extends Controller
 
         // Si el usuario no existe, redirigir a la página de registro
         if (!$user) {
-            return redirect()->route('register.view')->with('error', 'Verifique que sus credenciales sean correctas.');
+            return redirect()->route('register.view')->with('error', 'Verifique que sus credenciales sean correctas.')->withInput();
         }
 
         // Verificar que la cuenta esté activa (verificada por correo)
@@ -77,7 +78,7 @@ class AuthActionController extends Controller
 
         // Verificar que la contraseña es correcta
         if (!Hash::check($request->password, $user->password)) {
-            return redirect()->back()->with('error', 'Las credenciales no son correctas.');
+            return redirect()->back()->with('error', 'Las credenciales no son correctas.')->withInput();
         }
 
         // Generar y almacenar el código 2FA
@@ -268,8 +269,19 @@ class AuthActionController extends Controller
      *   - Redirige a la página anterior con un mensaje de error si no se encuentra el correo electrónico o el usuario.
      *   - Redirige a la ruta 'code.two-factor' con un mensaje de éxito si el código se reenvía correctamente.
      */
-    public function resendTwoFaCode()
+    public function resendTwoFaCode(Request $request)
     {
+
+        $validator = Validator::make($request->all(), [
+            'g-recaptcha-response' => 'required'
+        ], [
+            'g-recaptcha-response.required' => 'Por favor valide el captcha'
+        ]);
+
+        if($validator->fails()){
+            return redirect()->back()->with('error', 'Valide el captcha');
+        };
+
         // Obtener el correo electrónico del usuario desde la sesión
         $email = session($this->twoFactorController->sessionTwoFactorEmail);
 
@@ -316,9 +328,11 @@ class AuthActionController extends Controller
 
         $request->validate([
             'code' => 'required|string',
+            'g-recaptcha-response' => 'required'
         ], [
             'code.required' => 'El código es obligatorio.',
             'code.string' => 'El código debe ser una cadena de texto.',
+            'g-recaptcha-response' => 'Por favor valide el captcha'
         ]);
 
         // Obtener el usuario asociado al 2FA desde la sesión

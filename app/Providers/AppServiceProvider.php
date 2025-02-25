@@ -24,14 +24,5 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $options = [
-            PDO::MYSQL_ATTR_SSL_CA   => env('DB_SSL_CA'),
-            PDO::MYSQL_ATTR_SSL_CERT => env('DB_SSL_CERT'),
-            PDO::MYSQL_ATTR_SSL_KEY  => env('DB_SSL_KEY'),
-        ];
-
-        if (!extension_loaded('pdo_mysql') || empty(array_filter($options))) {
-            throw new \Exception('La conexión a MySQL requiere SSL, pero los certificados no están configurados correctamente.');
-        }
     }
 }

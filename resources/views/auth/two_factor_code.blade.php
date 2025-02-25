@@ -67,12 +67,15 @@
             <!-- Formulario de verificación de 2FA -->
             <form id="verifyForm" action="{{ route('two-factor.verify') }}" method="POST" class="mt-4">
                 @csrf
-
                 <div class="form-group">
                     <label for="code">Ingrese el código que recibió por correo electrónico</label>
                     <input type="text" id="code" name="code" class="form-control" placeholder="Código de verificación" required>
                 </div>
-                <button id="verifyButton" type="submit" class="btn btn-primary btn-block">
+
+                <!-- Campo oculto para reCAPTCHA -->
+                <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response-verify">
+
+                <button disabled id="verifyButton" type="submit" class="btn btn-primary btn-block">
                     <span id="verifySpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                     <span id="verifyButtonText">Verificar Código</span>
                 </button>
@@ -81,25 +84,78 @@
             <!-- Botón para reenviar código -->
             <form id="resendForm" action="{{ route('two-factor.resend') }}" method="POST" class="text-center mt-3">
                 @csrf
-                <button id="resendButton" type="submit" class="btn btn-secondary">
+                <!-- Campo oculto para reCAPTCHA -->
+                <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response-resend">
+
+                <button disabled id="resendButton" type="submit" class="btn btn-secondary">
                     <span id="resendSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                     <span id="resendButtonText">Reenviar código</span>
                 </button>
             </form>
+
+            <!-- reCAPTCHA -->
+            <div class="g-recaptcha mt-3"
+                 data-sitekey="{{ env('NOCAPTCHA_SITEKEY') }}"
+                 data-callback="onCaptchaSuccess"
+                 data-expired-callback="onCaptchaExpired"></div>
+
+            <!-- Mensaje de error para el captcha -->
+            <div id="recaptcha-error" class="alert alert-danger d-none mt-2">
+                Por favor, completa el captcha para continuar.
+            </div>
         </div>
     </div>
 
+    <!-- Script de reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script>
+        let isCaptchaValid = false;
+
+        function onCaptchaSuccess(token) {
+            isCaptchaValid = true;
+
+            // Guardar el token en los formularios
+            document.getElementById('g-recaptcha-response-verify').value = token;
+            document.getElementById('g-recaptcha-response-resend').value = token;
+
+            // Habilitar botones
+            document.getElementById('verifyButton').disabled = false;
+            document.getElementById('resendButton').disabled = false;
+
+            // Ocultar mensaje de error
+            document.getElementById('recaptcha-error').classList.add('d-none');
+        }
+
+        function onCaptchaExpired() {
+            isCaptchaValid = false;
+
+            // Borrar el token
+            document.getElementById('g-recaptcha-response-verify').value = "";
+            document.getElementById('g-recaptcha-response-resend').value = "";
+
+            // Deshabilitar botones
+            document.getElementById('verifyButton').disabled = true;
+            document.getElementById('resendButton').disabled = true;
+
+            // Mostrar mensaje de error
+            document.getElementById('recaptcha-error').classList.remove('d-none');
+        }
+
         // Manejo del formulario de verificación
         const verifyForm = document.getElementById('verifyForm');
         const verifyButton = document.getElementById('verifyButton');
         const verifySpinner = document.getElementById('verifySpinner');
         const verifyButtonText = document.getElementById('verifyButtonText');
 
-        verifyForm.addEventListener('submit', function () {
-            verifyButton.disabled = true; // Deshabilitar el botón
-            verifySpinner.classList.remove('d-none'); // Mostrar el spinner
-            verifyButtonText.textContent = "Cargando..."; // Cambiar el texto
+        verifyForm.addEventListener('submit', function (event) {
+            if (!isCaptchaValid) {
+                event.preventDefault();
+                document.getElementById('recaptcha-error').classList.remove('d-none');
+                return;
+            }
+            verifyButton.disabled = true;
+            verifySpinner.classList.remove('d-none');
+            verifyButtonText.textContent = "Cargando...";
         });
 
         // Manejo del formulario para reenviar código
@@ -108,10 +164,15 @@
         const resendSpinner = document.getElementById('resendSpinner');
         const resendButtonText = document.getElementById('resendButtonText');
 
-        resendForm.addEventListener('submit', function () {
-            resendButton.disabled = true; // Deshabilitar el botón
-            resendSpinner.classList.remove('d-none'); // Mostrar el spinner
-            resendButtonText.textContent = "Cargando..."; // Cambiar el texto
+        resendForm.addEventListener('submit', function (event) {
+            if (!isCaptchaValid) {
+                event.preventDefault();
+                document.getElementById('recaptcha-error').classList.remove('d-none');
+                return;
+            }
+            resendButton.disabled = true;
+            resendSpinner.classList.remove('d-none');
+            resendButtonText.textContent = "Cargando...";
         });
     </script>
 </body>

@@ -76,7 +76,9 @@
                 @csrf
                 <div class="form-group">
                     <label for="email">Correo Electrónico</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="Ingrese su correo" required
+                    <input
+                           value="{{old('email')}}"
+                           type="email" id="email" name="email" class="form-control" placeholder="Ingrese su correo" required
                            oninvalid="this.setCustomValidity('Por favor ingrese un correo electrónico válido')"
                            oninput="this.setCustomValidity('')">
                 </div>

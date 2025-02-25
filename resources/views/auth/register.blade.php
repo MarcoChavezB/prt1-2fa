@@ -64,8 +64,9 @@
             @csrf
             <!-- Nombre -->
             <div class="mb-4">
-                <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                <label for="name" class="block text-sm font-medium text-gray-700">Nombre</label>
                 <input
+                value="{{old('name')}}"
                 type="text" name="name" id="name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                 @error('name')
                     <span class="text-sm text-red-600">{{ $message }}</span>
@@ -74,8 +75,9 @@
 
             <!-- Correo Electrónico -->
             <div class="mb-4">
-                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <label for="email" class="block text-sm font-medium text-gray-700">Correo</label>
                 <input
+                value="{{old('email')}}"
                 type="email" name="email" id="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                 @error('email')
                     <span class="text-sm text-red-600">{{ $message }}</span>
@@ -84,17 +86,24 @@
 
             <!-- Contraseña -->
             <div class="mb-4">
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <label for="password" class="block text-sm font-medium text-gray-700">Contrasena</label>
                 <input
                 type="password" name="password" id="password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                 @error('password')
                     <span class="text-sm text-red-600">{{ $message }}</span>
                 @enderror
+                <ul class="text-sm mt-2 text-gray-600">
+                    <li id="length" class="invalid">🔴 Mínimo 10 caracteres</li>
+                    <li id="number" class="invalid">🔴 Al menos un número (0-9)</li>
+                    <li id="letter" class="invalid">🔴 Al menos una letra (a-z, A-Z)</li>
+                    <li id="symbol" class="invalid">🔴 Al menos un símbolo (!@#$%^&*)</li>
+                    <li id="case-diff" class="invalid">🔴 Al menos una mayúscula y una minúscula</li>
+                </ul>
             </div>
 
             <!-- Confirmación de Contraseña -->
             <div class="mb-4">
-                <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirmar contrasena</label>
                 <input
                 type="password" name="password_confirmation" id="password_confirmation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
             </div>
@@ -103,7 +112,7 @@
             <div class="mb-4">
                 <button id="submitButton" type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 flex items-center justify-center">
                     <span class="spinner-border hidden mr-2" id="spinner"></span>
-                    <span id="buttonText">Register</span>
+                    <span id="buttonText">Registrar</span>
                 </button>
 
                 <div class="g-recaptcha" data-sitekey="{{ env('NOCAPTCHA_SITEKEY') }}"></div>
@@ -126,39 +135,96 @@
         const spinner = document.getElementById('spinner');
         const buttonText = document.getElementById('buttonText');
         const recaptchaError = document.getElementById('recaptcha-error');
+        const passwordInput = document.getElementById("password");
 
+        // Elementos de validación de contraseña
+        const lengthCheck = document.getElementById("length");
+        const numberCheck = document.getElementById("number");
+        const letterCheck = document.getElementById("letter");
+        const symbolCheck = document.getElementById("symbol");
+        const caseDiffCheck = document.getElementById("case-diff");
+
+        // Evento de validación al enviar el formulario
         form.addEventListener('submit', function (event) {
             const response = grecaptcha.getResponse();
+            const passwordValid = isPasswordValid(passwordInput.value);
+
+            let hasErrors = false;
+
+            if (!passwordValid) {
+                alert("La contraseña no cumple con los requisitos.");
+                hasErrors = true;
+            }
 
             if (response.length === 0) {
-                // Muestra el mensaje de error del captcha y cancela el envío
                 recaptchaError.classList.remove('hidden');
-                event.preventDefault();
-                resetButtonState();
+                hasErrors = true;
             } else {
-                // Oculta el mensaje de error del captcha
                 recaptchaError.classList.add('hidden');
+            }
 
-                // Deshabilita el botón y muestra el spinner
-                submitButton.disabled = true;
-                spinner.classList.remove('hidden');
-                buttonText.textContent = "Cargando...";
+            if (hasErrors) {
+                event.preventDefault();
             }
         });
 
-        function resetButtonState() {
-            // Restaura el estado del botón en caso de errores
-            submitButton.disabled = false;
-            spinner.classList.add('hidden');
-            buttonText.textContent = "Register";
+        // Verificar si la contraseña es válida
+        function isPasswordValid(password) {
+            const hasNumber = /\d/.test(password);
+            const hasLetter = /[a-zA-Z]/.test(password);
+            const hasSymbol = /[\W_]/.test(password);
+            const hasUpper = /[A-Z]/.test(password);
+            const hasLower = /[a-z]/.test(password);
+            const isLongEnough = password.length >= 10;
+
+            // Actualizar los estilos de validación
+            updateValidation(lengthCheck, isLongEnough);
+            updateValidation(numberCheck, hasNumber);
+            updateValidation(letterCheck, hasLetter);
+            updateValidation(symbolCheck, hasSymbol);
+            updateValidation(caseDiffCheck, hasUpper && hasLower);
+
+            return isLongEnough && hasNumber && hasLetter && hasSymbol && hasUpper && hasLower;
         }
 
-        // Al cargar la página, verifica si hay errores para restaurar el botón
-        document.addEventListener('DOMContentLoaded', function () {
-            if (document.querySelector('.text-red-600')) {
-                resetButtonState();
+        // Función para actualizar los estilos de validación
+        function updateValidation(element, isValid) {
+            if (isValid) {
+                element.classList.remove("invalid");
+                element.classList.add("valid");
+                element.textContent = element.textContent.replace("🔴", "🟢");
+            } else {
+                element.classList.remove("valid");
+                element.classList.add("invalid");
+                element.textContent = element.textContent.replace("🟢", "🔴");
+            }
+        }
+
+        // Evento de validación de la contraseña en tiempo real
+        passwordInput.addEventListener("input", function () {
+            isPasswordValid(passwordInput.value);
+        });
+
+        // Detectar cambios en el captcha
+        document.addEventListener("DOMContentLoaded", function () {
+            const recaptcha = document.querySelector(".g-recaptcha");
+            if (recaptcha) {
+                recaptcha.addEventListener("change", function () {
+                    recaptchaError.classList.add('hidden');
+                });
             }
         });
+
     </script>
 </body>
 </html>
+
+<style>
+    .valid {
+        color: green;
+    }
+
+    .invalid {
+        color: red;
+    }
+</style>
