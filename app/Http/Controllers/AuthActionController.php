@@ -57,6 +57,8 @@ class AuthActionController extends Controller
             'g-recaptcha-response.required' => 'Por favor valide el captcha',
         ]);
 
+        dd($validator->errors());
+
         // Si la validación falla, regresar con errores
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
