@@ -45,8 +45,6 @@ class AuthActionController extends Controller
     */
     public function login(Request $request)
     {
-
-        return redirect()->route('register.view')->with('error', 'Verifique que sus credenciales sean correctas.')->withInput();
         // Validacion de campos
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',

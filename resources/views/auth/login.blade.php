@@ -68,7 +68,7 @@
                 </div>
             @endif
             <!-- Título de la página -->
-            <h2 class="text-center">Iniciar Sesión debug</h2>
+            <h2 class="text-center">Iniciar Sesión</h2>
 
             <!-- Formulario de inicio de sesión -->
 
