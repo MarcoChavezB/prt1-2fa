@@ -45,6 +45,8 @@ class AuthActionController extends Controller
     */
     public function login(Request $request)
     {
+
+        return redirect()->route('register.view')->with('error', 'Verifique que sus credenciales sean correctas.')->withInput();
         // Validacion de campos
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
@@ -56,8 +58,6 @@ class AuthActionController extends Controller
             'password.required' => 'La contraseña es obligatoria.',
             'g-recaptcha-response.required' => 'Por favor valide el captcha',
         ]);
-
-        dd($validator->errors());
 
         // Si la validación falla, regresar con errores
         if ($validator->fails()) {
