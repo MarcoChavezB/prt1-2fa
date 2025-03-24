@@ -59,7 +59,7 @@ class AuthActionController extends Controller
         ]);
 
         Resend::emails()->send([
-            'from' => 'aviatorreon@gmail.com',
+            'from' => 'infotrc@aviafly.mx',
             'to' => [$request->email],
             'subject' => 'hello world',
             'html' => '<h1>Hello, world!</h1>',
