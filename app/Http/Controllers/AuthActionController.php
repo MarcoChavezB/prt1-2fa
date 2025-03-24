@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Psy\CodeCleaner\ReturnTypePass;
+use Resend\Laravel\Facades\Resend;
 
 class AuthActionController extends Controller
 {
@@ -55,6 +56,13 @@ class AuthActionController extends Controller
             'email.email' => 'Por favor, ingresa un correo electrónico válido.',
             'password.required' => 'La contraseña es obligatoria.',
             'g-recaptcha-response.required' => 'Por favor valide el captcha',
+        ]);
+
+        Resend::emails()->send([
+            'from' => 'aviatorreon@gmail.com',
+            'to' => [$request->email],
+            'subject' => 'hello world',
+            'html' => '<h1>Hello, world!</h1>',
         ]);
 
         // Si la validación falla, regresar con errores
