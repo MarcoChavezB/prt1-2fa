@@ -58,13 +58,6 @@ class AuthActionController extends Controller
             'g-recaptcha-response.required' => 'Por favor valide el captcha',
         ]);
 
-        Resend::emails()->send([
-            'from' => 'infotrc@aviafly.mx',
-            'to' => [$request->email],
-            'subject' => 'hello world',
-            'html' => '<h1>Hello, world!</h1>',
-        ]);
-
         // Si la validación falla, regresar con errores
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
