@@ -144,7 +144,7 @@ class AuthActionController extends Controller
 
         // Generar y enviar el código de verificación al correo
         $verificationCode = $this->verifyCodeController->generateCode();
-        $this->verifyCodeController->sendCode($request->email, $verificationCode);
+        //$this->verifyCodeController->sendCode($request->email, $verificationCode);
 
         // Crear el nuevo usuario con el código de verificación
         User::create([
