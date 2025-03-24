@@ -59,10 +59,10 @@ return [
             'strict' => true,
             'engine' => null,
             'options'   => [
-                PDO::MYSQL_ATTR_SSL_CA     => env('DB_SSL_CA'),
+                /* PDO::MYSQL_ATTR_SSL_CA     => env('DB_SSL_CA'),
                 PDO::MYSQL_ATTR_SSL_CERT   => env('DB_SSL_CERT'),
                 PDO::MYSQL_ATTR_SSL_KEY    => env('DB_SSL_KEY'),
-                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false, */
             ],
         ],
 

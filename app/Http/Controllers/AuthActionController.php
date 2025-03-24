@@ -107,6 +107,8 @@ class AuthActionController extends Controller
     */
     public function register(Request $request)
     {
+
+        return redirect()->back()->with('success', 'redirecct')->withInput();
         // Validación de datos de registro
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
