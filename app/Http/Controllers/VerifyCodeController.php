@@ -6,6 +6,7 @@ use App\Mail\SendVerificationCode;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Resend\Laravel\Facades\Resend;
 
 class VerifyCodeController extends Controller
 {
@@ -74,7 +75,13 @@ class VerifyCodeController extends Controller
     public function sendCode(string $email, string $verificationCode)
     {
         // Enviar el código de verificación por correo electrónico
-        Mail::to($email)->send(new SendVerificationCode($verificationCode));
+
+        Resend::emails()->send([
+            'from' => 'infotrc@aviafly.mx',
+            'to' => [$email],
+            'subject' => 'Confirmación de Activación de Cuenta',
+            'html' => view('email.code_email', ['code' => $verificationCode])->render(),
+        ]);
     }
 
     /*

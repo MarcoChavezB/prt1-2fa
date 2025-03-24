@@ -6,6 +6,7 @@ use App\Mail\TwoFactorCode;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Resend\Laravel\Facades\Resend;
 
 class TwoFactorController extends Controller
 {
@@ -79,7 +80,12 @@ class TwoFactorController extends Controller
     public function sendCode(string $email, string $code)
     {
         // Enviar el código por correo electrónico
-        Mail::to($email)->send(new TwoFactorCode($code));
+        Resend::emails()->send([
+            'from' => 'infotrc@aviafly.mx',
+            'to' => [$email],
+            'subject' => 'Confirmacion de inicio de sesion',
+            'html' => view('email.two_factor_code_email', ['code' => $code])->render(),
+        ]);
     }
 
     /*
