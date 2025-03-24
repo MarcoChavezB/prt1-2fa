@@ -71,10 +71,10 @@ class AuthActionController extends Controller
         }
 
         // Verificar que la cuenta esté activa (verificada por correo)
-        /* if (!$user->email_verified_at) {
+        if (!$user->email_verified_at) {
             session([$this->verifyCodeController->userEmailSessionName => $user->email]);
             return redirect()->route('code.inactive');
-        } */
+        }
 
         // Verificar que la contraseña es correcta
         if (!Hash::check($request->password, $user->password)) {
@@ -84,7 +84,7 @@ class AuthActionController extends Controller
         // Generar y almacenar el código 2FA
         $twoFactorCode = $this->verifyCodeController->generateCode(); // Genera el código
         $this->twoFactorController->updateCode($user, $twoFactorCode); // Almacena el código en el usuario
-        //$this->twoFactorController->sendCode($user->email, $twoFactorCode); // Envía el código por correo
+        $this->twoFactorController->sendCode($user->email, $twoFactorCode); // Envía el código por correo
 
         // Guardar el email del usuario en sesión para validación de 2FA
         session([$this->twoFactorController->sessionTwoFactorEmail => $user->email]);
@@ -144,7 +144,7 @@ class AuthActionController extends Controller
 
         // Generar y enviar el código de verificación al correo
         $verificationCode = $this->verifyCodeController->generateCode();
-        //$this->verifyCodeController->sendCode($request->email, $verificationCode);
+        $this->verifyCodeController->sendCode($request->email, $verificationCode);
 
         // Crear el nuevo usuario con el código de verificación
         User::create([
