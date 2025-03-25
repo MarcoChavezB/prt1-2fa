@@ -112,7 +112,7 @@
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
     <script>
-       const form = document.getElementById('loginForm');
+        const form = document.getElementById('loginForm');
         const submitButton = document.getElementById('submitButton');
         const spinner = submitButton.querySelector('.spinner-border');
         const buttonText = submitButton.querySelector('.button-text');

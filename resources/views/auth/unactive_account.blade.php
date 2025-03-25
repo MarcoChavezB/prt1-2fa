@@ -44,19 +44,28 @@
                         <h5 class="text-center">Tu cuenta aún no está verificada</h5>
                         <p class="text-center">Por favor verifica tu correo electrónico para activar tu cuenta.</p>
 
-                        @if (session('error'))
+                        @if ($errors->any())
                             <div class="alert alert-danger">
-                                {{ session('error') }}
+                                <ul>
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
                             </div>
                         @endif
 
-                        <form onsubmit='disableButton()' id="resendForm" method="POST" action="{{ route('resend.verification') }}">
+                        <form id="resendForm" method="POST" action="{{ route('resend.verification') }}">
                             @csrf
                             <div class="form-group text-center">
                                 <button id="submit_button" type="submit" class="btn btn-primary">
                                     <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                     <span id="buttonText">Enviar nuevamente el correo de verificación</span>
                                 </button>
+                            </div>
+
+                            <div class="g-recaptcha" data-sitekey="{{ env('NOCAPTCHA_SITEKEY') }}"></div>
+                            <div id="recaptcha-error" class="alert alert-danger d-none">
+                                Por favor, completa el captcha para continuar.
                             </div>
                         </form>
                     </div>
@@ -67,13 +76,37 @@
 
     <script>
         const submitButton = document.getElementById('submit_button');
+        const form = document.getElementById('resendForm');
+
         function disableButton(){
             submitButton.disabled = true;
             submitButton.innerText = 'Cargando...';
             submitButton.style.cursor = 'not-allowed';
         }
+
+        function enableButton(){
+            submitButton.disabled = false;
+            submitButton.innerText = 'Enviar nuevamente el correo de verificación';
+            submitButton.style.cursor = 'pointer';
+        }
+
+        form.addEventListener('submit', function(event){
+            const recaptcha = document.querySelector('.g-recaptcha-response').value;
+            disableButton();
+            if(!recaptcha){
+                event.preventDefault();
+                document.getElementById('recaptcha-error').classList.remove('d-none');
+                enableButton();
+                return
+            }
+
+            document.getElementById('recaptcha-error').classList.add('d-none');
+            enableButton();
+        });
+
     </script>
 
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
